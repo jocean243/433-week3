@@ -1,0 +1,52 @@
+---
+title: "README"
+author: "JIAYI HONG"
+date: "9/21/2021"
+output: github_document
+---
+
+
+```{r}
+library(dplyr)
+
+# install.packages("nycflights13")
+library(nycflights13)
+library(ggplot2)
+library(ggfortify)
+```
+
+8,255 flights have a missing dep_time. Additionally, 8255 have a missing dep_delay, 8713 have a missing arr_time, 9430 have a missing arr_delay, and 9430 have a missing air_time. These rows might represent flights that were canceled or had unscheduled landing at another airport or data is lost due to error. 
+
+```{r}
+filter(flights, is.na(dep_time))
+
+summary(flights)
+```
+
+
+```{r}
+mutate(flights,
+       dep_time = (dep_time %/% 100) * 60 + (dep_time %% 100),
+       sched_dep_time = (sched_dep_time %/% 100) * 60 + (sched_dep_time %% 100))
+```
+
+```{r}
+library(lubridate)
+flights %>%
+  mutate(dep_date = make_datetime(year, month, day)) %>%
+  group_by(dep_date) %>%
+  summarise(canceled_prop = sum(is.na(dep_time)) / n(),
+         mean_dep_delay = mean(dep_delay,na.rm=T),
+         mean_arr_delay = mean(arr_delay,na.rm=T)) %>%
+  
+  ggplot(aes(x = canceled_prop, alpha = 0.5)) +
+  geom_point(aes(y= mean_dep_delay, col = "Dep Delay")) +
+  geom_point(aes(y = mean_arr_delay, col = "Arr Delay"))+
+  labs(y = "Average Delay (minutes)", x = "Proportion of Canceled Flight")+
+  theme(legend.position = "bottom")+
+  guides(alpha = F)
+```
+  
+There is roughly a linear relationship between the proportion of canceled flights and the average delay
+
+
